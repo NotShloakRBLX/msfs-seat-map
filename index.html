@@ -1182,42 +1182,39 @@
     }
 
     async function payNow() {
-      if (!selectedSeat || !sessionRef || !sessionData) return;
+  if (!selectedSeat || !sessionRef || !sessionData) return;
 
-      payButton.disabled = true;
+  payButton.disabled = true;
 
-      showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
+  showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
 
-      try {
-        await updateDoc(sessionRef, {
-          status: "processing",
-          selectedSeat: selectedSeat.id,
-          selectedCabin: "First/Business",
-          paidMiles: Number(selectedSeat.price || 0),
-          aircraftType: selectedAircraftType,
-          updatedAt: serverTimestamp()
-        });
+  try {
+    await updateDoc(sessionRef, {
+      status: "processing",
+      selectedSeat: selectedSeat.id,
+      selectedCabin: "First/Business",
+      paidMiles: Number(selectedSeat.price || 0),
+      aircraftType: selectedAircraftType,
+      updatedAt: serverTimestamp()
+    });
 
-        setTimeout(async () => {
-          statusTitle.textContent = "Redirecting...";
-          statusSubtitle.textContent = "Return to the original flight tracker to confirm.";
+    setTimeout(async () => {
+      statusTitle.textContent = "Please return to the original flight tracker";
+      statusSubtitle.textContent = "Your selected seat is ready to confirm.";
 
-          await updateDoc(sessionRef, {
-            status: "redirecting",
-            updatedAt: serverTimestamp()
-          });
-
-          const returnUrl = sessionData.returnUrl || "/";
-          window.location.href = `${returnUrl}?seatSessionId=${encodeURIComponent(sessionId)}`;
-        }, 5000);
-      } catch (error) {
-        console.error("Error processing seat selection:", error);
-        alert("Seat selection could not be processed.");
-        overlay.classList.remove("active");
-        statusPopup.classList.remove("active");
-        payButton.disabled = false;
-      }
-    }
+      await updateDoc(sessionRef, {
+        status: "redirecting",
+        updatedAt: serverTimestamp()
+      });
+    }, 5000);
+  } catch (error) {
+    console.error("Error processing seat selection:", error);
+    alert("Seat selection could not be processed.");
+    overlay.classList.remove("active");
+    statusPopup.classList.remove("active");
+    payButton.disabled = false;
+  }
+}
 
     async function init() {
       if (!sessionId) {
