@@ -597,6 +597,12 @@
       animation: seatRedirectSpin 0.9s linear infinite;
     }
 
+    @keyframes seatRedirectSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
     .locked-screen {
       display: none;
       min-height: 100vh;
@@ -1241,12 +1247,15 @@
         return;
       }
 
-      if (sessionData.status === "redirecting" || sessionData.status === "processing") {
-        updateFlightCard();
-        showProcessingPopup("Redirecting...", "Return to the original flight tracker to confirm your seat.");
-      } else {
-        updateFlightCard();
-      }
+      updateFlightCard();
+
+if (sessionData.status === "processing") {
+  showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
+}
+
+if (sessionData.status === "redirecting") {
+  showProcessingPopup("Please return to the original flight tracker", "Your selected seat is ready to confirm.");
+}
 
       if (sessionData.aircraftType) {
         chooseAircraft(sessionData.aircraftType);
@@ -1267,9 +1276,13 @@
           showLockedScreen();
         }
 
-        if (sessionData.status === "redirecting" || sessionData.status === "processing") {
-          showProcessingPopup("Redirecting...", "Return to the original flight tracker to confirm your seat.");
-        }
+        if (sessionData.status === "processing") {
+  showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
+}
+
+if (sessionData.status === "redirecting") {
+  showProcessingPopup("Please return to the original flight tracker", "Your selected seat is ready to confirm.");
+}
       });
     }
 
