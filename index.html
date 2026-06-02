@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>MSFS Seat Map</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(91, 95, 255, 0.20), transparent 34%),
+        radial-gradient(circle at top right, rgba(0, 194, 255, 0.13), transparent 32%),
+        radial-gradient(circle at bottom, rgba(22, 225, 138, 0.08), transparent 34%),
+        #070b18;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 26px 18px 40px;
+    }
+
+    .page {
+      display: none;
+      animation: pageIn 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.985);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .back-button {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.04);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .back-button:active {
+      transform: scale(0.92);
+    }
+
+    .back-button svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .page-title {
+      font-size: 31px;
+      font-weight: 950;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .flight-card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      background:
+        radial-gradient(circle at top left, rgba(64, 156, 255, 0.18), transparent 45%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.035)),
+        rgba(255, 255, 255, 0.04);
+      box-shadow:
+        0 26px 90px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.11);
+    }
+
+    .flight-top {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .airline-logo {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .airline-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .flight-number {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 15px;
+      font-weight: 850;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .route-line {
+      margin-top: 7px;
+      color: white;
+      font-size: 31px;
+      font-weight: 950;
+      letter-spacing: -1.1px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .route-arrow {
+      color: #67a8ff;
+      opacity: 0.88;
+    }
+
+    .question-card {
+      margin-top: 18px;
+      padding: 22px;
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.035);
+      box-shadow:
+        0 24px 76px rgba(0, 0, 0, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    }
+
+    .question-title {
+      font-size: 25px;
+      font-weight: 920;
+      letter-spacing: -0.75px;
+    }
+
+    .question-subtitle {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.52);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.28;
+    }
+
+    .aircraft-options {
+      margin-top: 18px;
+      display: grid;
+      gap: 13px;
+    }
+
+    .aircraft-option {
+      width: 100%;
+      min-height: 78px;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.04);
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .aircraft-option:active {
+      transform: scale(0.985);
+    }
+
+    .aircraft-option.selected {
+      border-color: rgba(22, 225, 138, 0.65);
+      background:
+        linear-gradient(145deg, rgba(22, 225, 138, 0.16), rgba(255, 255, 255, 0.035)),
+        rgba(255, 255, 255, 0.05);
+      box-shadow: 0 16px 40px rgba(12, 190, 113, 0.14);
+    }
+
+    .aircraft-name {
+      font-size: 18px;
+      font-weight: 880;
+      letter-spacing: -0.25px;
+    }
+
+    .aircraft-desc {
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.50);
+      font-size: 13px;
+      font-weight: 680;
+    }
+
+    .continue-button,
+    .pay-button {
+      width: 100%;
+      height: 56px;
+      margin-top: 18px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #16e18a, #0fbf75, #069b61);
+      color: white;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: -0.2px;
+      cursor: pointer;
+      box-shadow:
+        0 18px 42px rgba(12, 190, 113, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      transition: transform 0.25s ease, filter 0.25s ease, opacity 0.25s ease;
+    }
+
+    .continue-button:active,
+    .pay-button:active {
+      transform: scale(0.97);
+    }
+
+    .continue-button:disabled,
+    .pay-button:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+      box-shadow: none;
+    }
+
+    .continue-button svg,
+    .pay-button svg {
+      width: 17px;
+      height: 17px;
+      fill: currentColor;
+    }
+
+    .seat-map-shell {
+      margin-top: 14px;
+      padding: 18px 12px 28px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.035);
+      box-shadow:
+        0 26px 90px rgba(0, 0, 0, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+      overflow: hidden;
+    }
+
+    .seat-map-header {
+      padding: 0 10px 16px;
+    }
+
+    .seat-map-title {
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: -0.8px;
+    }
+
+    .seat-map-subtitle {
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.50);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .aircraft-body {
+      position: relative;
+      margin: 0 auto;
+      padding: 22px 14px 24px;
+      width: 100%;
+      max-width: 390px;
+      border-radius: 44px 44px 34px 34px;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.92), rgba(210, 218, 229, 0.90), rgba(255, 255, 255, 0.92));
+      border: 1px solid rgba(255, 255, 255, 0.40);
+      box-shadow:
+        inset 0 0 0 5px rgba(0, 0, 0, 0.18),
+        0 30px 80px rgba(0, 0, 0, 0.30);
+    }
+
+    .cabin-floor {
+      padding: 18px 12px;
+      border-radius: 34px 34px 24px 24px;
+      background: #c9ced8;
+      border: 1px solid rgba(0, 0, 0, 0.18);
+      overflow: visible;
+    }
+
+    .letters-row,
+    .seat-row {
+      display: grid;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .seat-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .widebody .letters-row,
+    .widebody .seat-row {
+      grid-template-columns: 1fr 1fr 20px 1fr 1fr 20px 1fr 1fr;
+    }
+
+    .narrowbody .letters-row,
+    .narrowbody .seat-row {
+      grid-template-columns: 1fr 1fr 34px 1fr 1fr;
+    }
+
+    .aisle {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(0, 0, 0, 0.30);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .letter {
+      height: 22px;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.36);
+      font-size: 15px;
+      font-weight: 900;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .seat {
+      position: relative;
+      min-height: 48px;
+      border: none;
+      border-radius: 14px 14px 11px 11px;
+      background:
+        linear-gradient(180deg, #7d838b, #555b65);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.26),
+        0 5px 0 rgba(55, 60, 68, 0.94),
+        0 12px 20px rgba(0, 0, 0, 0.18);
+      transition:
+        transform 0.22s ease,
+        filter 0.22s ease,
+        opacity 0.22s ease,
+        background 0.22s ease;
+    }
+
+    .seat::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      bottom: 6px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .seat.available:active {
+      transform: scale(0.94);
+    }
+
+    .seat.taken {
+      cursor: not-allowed;
+      opacity: 0.32;
+      filter: grayscale(0.75);
+    }
+
+    .seat.selected {
+      background:
+        linear-gradient(180deg, #16e18a, #0fbf75);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.36),
+        0 5px 0 rgba(3, 117, 69, 0.95),
+        0 18px 30px rgba(12, 190, 113, 0.24);
+      color: #03120b;
+    }
+
+    .seat-popover {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      z-index: 30;
+      width: 142px;
+      padding: 10px;
+      border-radius: 15px;
+      background: rgba(7, 11, 24, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: auto;
+      animation: popoverIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popoverIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px) scale(0.96);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
+    }
+
+    .popover-seat {
+      font-size: 17px;
+      font-weight: 950;
+      letter-spacing: -0.4px;
+      color: white;
+    }
+
+    .popover-price {
+      margin-top: 3px;
+      color: #16e18a;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .popover-button {
+      width: 100%;
+      height: 32px;
+      margin-top: 9px;
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #16e18a, #0fbf75);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .selection-panel {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top left, rgba(22, 225, 138, 0.12), transparent 44%),
+        rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .selection-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 0;
+    }
+
+    .selection-row:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .selection-label {
+      color: rgba(255, 255, 255, 0.48);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+    }
+
+    .selection-value {
+      color: white;
+      font-size: 20px;
+      font-weight: 950;
+      letter-spacing: -0.45px;
+    }
+
+    .selection-value.price {
+      color: #16e18a;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(0, 0, 0, 0.66);
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.34s ease;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .status-popup {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 90;
+      width: min(410px, calc(100% - 34px));
+      padding: 26px;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at top left, rgba(22, 225, 138, 0.14), transparent 45%),
+        rgba(13, 17, 32, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.56),
+        inset 0 1px 0 rgba(255, 255, 255, 0.11);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 40px) scale(0.96);
+      transition:
+        opacity 0.34s ease,
+        transform 0.46s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: center;
+    }
+
+    .status-popup.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .status-title {
+      font-size: 27px;
+      font-weight: 950;
+      letter-spacing: -0.75px;
+    }
+
+    .status-subtitle {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.28;
+    }
+
+    .loader {
+      width: 44px;
+      height: 44px;
+      margin: 20px auto 0;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.14);
+      border-top-color: #16e18a;
+      animation: seatRedirectSpin 0.9s linear infinite;
+    }
+
+    .locked-screen {
+      display: none;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .locked-screen.active {
+      display: flex;
+    }
+
+    .locked-card {
+      width: min(430px, 100%);
+      padding: 30px 24px;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at top, rgba(255, 75, 75, 0.12), transparent 48%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
+    }
+
+    .locked-icon {
+      width: 66px;
+      height: 66px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff4b4b;
+    }
+
+    .locked-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: currentColor;
+    }
+
+    .locked-title {
+      font-size: 30px;
+      font-weight: 950;
+      letter-spacing: -0.9px;
+      line-height: 1.04;
+    }
+
+    .locked-subtitle {
+      margin-top: 10px;
+      color: rgba(255, 255, 255, 0.52);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app" id="app">
+    <section class="page active" id="setupPage">
+      <div class="top-bar">
+        <h1 class="page-title">Seat Map</h1>
+      </div>
+
+      <article class="flight-card">
+        <div class="flight-top">
+          <div class="airline-logo" id="airlineLogo"></div>
+
+          <div>
+            <div class="flight-number" id="flightNumberDisplay">-- 0000</div>
+            <div class="route-line">
+              <span id="departureDisplay">DEP</span>
+              <span class="route-arrow">→</span>
+              <span id="arrivalDisplay">ARR</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <section class="question-card">
+        <div class="question-title">Aircraft type</div>
+        <div class="question-subtitle">Choose the layout style for this First/Business cabin.</div>
+
+        <div class="aircraft-options">
+          <button class="aircraft-option" id="widebodyOption" type="button">
+            <div class="aircraft-name">Widebody</div>
+            <div class="aircraft-desc">Larger premium cabin with separated aisle sections.</div>
+          </button>
+
+          <button class="aircraft-option" id="narrowbodyOption" type="button">
+            <div class="aircraft-name">Narrowbody</div>
+            <div class="aircraft-desc">Smaller premium cabin with 2-2 seating.</div>
+          </button>
+        </div>
+
+        <button class="continue-button" id="continueButton" type="button" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 10V8a5 5 0 0 1 10 0v2h.5A2.5 2.5 0 0 1 20 12.5v6A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-6A2.5 2.5 0 0 1 6.5 10H7Zm2 0h6V8a3 3 0 0 0-6 0v2Z" />
+          </svg>
+          Continue to seat selection
+        </button>
+      </section>
+    </section>
+
+    <section class="page" id="seatPage">
+      <div class="top-bar">
+        <button class="back-button" id="seatBackButton" aria-label="Back">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15.53 4.47a.75.75 0 0 1 0 1.06L9.06 12l6.47 6.47a.75.75 0 1 1-1.06 1.06l-7-7a.75.75 0 0 1 0-1.06l7-7a.75.75 0 0 1 1.06 0Z" />
+          </svg>
+        </button>
+
+        <h1 class="page-title">Select Seat</h1>
+      </div>
+
+      <section class="seat-map-shell">
+        <div class="seat-map-header">
+          <div class="seat-map-title" id="seatMapTitle">First/Business</div>
+          <div class="seat-map-subtitle">Taken seats are gray. Tap an available seat to view price.</div>
+        </div>
+
+        <div class="aircraft-body" id="aircraftBody">
+          <div class="cabin-floor" id="seatMap"></div>
+        </div>
+      </section>
+
+      <section class="selection-panel">
+        <div class="selection-row">
+          <div class="selection-label">Seat</div>
+          <div class="selection-value" id="selectedSeatDisplay">--</div>
+        </div>
+
+        <div class="selection-row">
+          <div class="selection-label">Price</div>
+          <div class="selection-value price" id="selectedPriceDisplay">--</div>
+        </div>
+      </section>
+
+      <button class="pay-button" id="payButton" type="button" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 10V8a5 5 0 0 1 10 0v2h.5A2.5 2.5 0 0 1 20 12.5v6A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-6A2.5 2.5 0 0 1 6.5 10H7Zm2 0h6V8a3 3 0 0 0-6 0v2Z" />
+        </svg>
+        Pay now
+      </button>
+    </section>
+  </main>
+
+  <section class="locked-screen" id="lockedScreen">
+    <div class="locked-card">
+      <div class="locked-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 10V8a5 5 0 0 1 10 0v2h.5A2.5 2.5 0 0 1 20 12.5v6A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-6A2.5 2.5 0 0 1 6.5 10H7Zm2 0h6V8a3 3 0 0 0-6 0v2Z" />
+        </svg>
+      </div>
+
+      <div class="locked-title">Seat selection unavailable</div>
+      <div class="locked-subtitle">This seat session has already been completed or closed.</div>
+    </div>
+  </section>
+
+  <div class="overlay" id="overlay"></div>
+
+  <section class="status-popup" id="statusPopup">
+    <div class="status-title" id="statusTitle">Transaction processing...</div>
+    <div class="status-subtitle" id="statusSubtitle">Do not close this page.</div>
+    <div class="loader"></div>
+  </section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      onSnapshot,
+      updateDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAehW0Ab5c0bpb824JyPBa43YBvyR7zwig",
+      authDomain: "msfs-flight-tracker.firebaseapp.com",
+      projectId: "msfs-flight-tracker",
+      storageBucket: "msfs-flight-tracker.firebasestorage.app",
+      messagingSenderId: "477994284624",
+      appId: "1:477994284624:web:50bef41d84258420ea8355"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const appShell = document.getElementById("app");
+    const setupPage = document.getElementById("setupPage");
+    const seatPage = document.getElementById("seatPage");
+    const lockedScreen = document.getElementById("lockedScreen");
+
+    const airlineLogo = document.getElementById("airlineLogo");
+    const flightNumberDisplay = document.getElementById("flightNumberDisplay");
+    const departureDisplay = document.getElementById("departureDisplay");
+    const arrivalDisplay = document.getElementById("arrivalDisplay");
+
+    const widebodyOption = document.getElementById("widebodyOption");
+    const narrowbodyOption = document.getElementById("narrowbodyOption");
+    const continueButton = document.getElementById("continueButton");
+
+    const seatBackButton = document.getElementById("seatBackButton");
+    const aircraftBody = document.getElementById("aircraftBody");
+    const seatMap = document.getElementById("seatMap");
+    const seatMapTitle = document.getElementById("seatMapTitle");
+    const selectedSeatDisplay = document.getElementById("selectedSeatDisplay");
+    const selectedPriceDisplay = document.getElementById("selectedPriceDisplay");
+    const payButton = document.getElementById("payButton");
+
+    const overlay = document.getElementById("overlay");
+    const statusPopup = document.getElementById("statusPopup");
+    const statusTitle = document.getElementById("statusTitle");
+    const statusSubtitle = document.getElementById("statusSubtitle");
+
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("sessionId");
+
+    let sessionRef = null;
+    let sessionData = null;
+    let selectedAircraftType = "";
+    let activeLayout = null;
+    let openedSeatPopover = "";
+    let selectedSeat = null;
+
+    function escapeHTML(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function getAirlineLogoPath(code) {
+      const safeCode = String(code || "").trim().toLowerCase();
+      if (!safeCode) return "";
+      return `./${safeCode}.png`;
+    }
+
+    function getRandomInteger(min, max) {
+      const low = Math.ceil(min);
+      const high = Math.floor(max);
+      return Math.floor(Math.random() * (high - low + 1)) + low;
+    }
+
+    function hashString(value) {
+      let hash = 2166136261;
+
+      for (let i = 0; i < value.length; i += 1) {
+        hash ^= value.charCodeAt(i);
+        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+      }
+
+      return hash >>> 0;
+    }
+
+    function seededRandom(seedState) {
+      seedState.value += 0x6D2B79F5;
+      let t = seedState.value;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function seededInteger(seedState, min, max) {
+      return Math.floor(seededRandom(seedState) * (max - min + 1)) + min;
+    }
+
+    function getPremiumSeatCostRange(distance) {
+      const safeDistance = Number(distance || 0);
+
+      if (safeDistance <= 500) return { min: 750, max: 1500 };
+      if (safeDistance <= 1500) return { min: 2000, max: 3500 };
+      if (safeDistance <= 3000) return { min: 4000, max: 6500 };
+      if (safeDistance <= 5500) return { min: 6500, max: 9500 };
+      if (safeDistance <= 8000) return { min: 11000, max: 17000 };
+
+      return { min: 18000, max: 26000 };
+    }
+
+    function getSeatPrice(row, totalRows, distance, seedState) {
+      const range = getPremiumSeatCostRange(distance);
+      const frontFactor = totalRows <= 1 ? 1 : 1 - ((row - 1) / (totalRows - 1));
+      const base = range.min + ((range.max - range.min) * frontFactor);
+      const randomShift = seededInteger(seedState, -650, 650);
+      const price = Math.round(base + randomShift);
+
+      return Math.max(range.min, Math.min(range.max, price));
+    }
+
+    function shuffleWithSeed(items, seedState) {
+      const array = [...items];
+
+      for (let i = array.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(seededRandom(seedState) * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+
+      return array;
+    }
+
+    function getLettersForAircraft(type) {
+      if (type === "widebody") {
+        return ["A", "D", "G", "J"];
+      }
+
+      return ["A", "C", "D", "F"];
+    }
+
+    function getWindowLettersForAircraft(type) {
+      if (type === "widebody") {
+        return ["A", "J"];
+      }
+
+      return ["A", "F"];
+    }
+
+    function generateSeatLayout(type) {
+      const rows = Math.max(1, Number(sessionData.firstBusinessLastRow || 1));
+      const distance = Number(sessionData.routeDistanceMiles || 0);
+      const letters = getLettersForAircraft(type);
+      const windowLetters = getWindowLettersForAircraft(type);
+      const minimumAvailableWindows = type === "widebody" ? 4 : 2;
+      const seedState = { value: hashString(`${sessionId}-${type}`) };
+
+      const allSeats = [];
+
+      for (let row = 1; row <= rows; row += 1) {
+        letters.forEach((letter) => {
+          const seatNumber = `${row}${letter}`;
+
+          allSeats.push({
+            id: seatNumber,
+            row,
+            letter,
+            price: getSeatPrice(row, rows, distance, seedState),
+            window: windowLetters.includes(letter),
+            taken: false
+          });
+        });
+      }
+
+      const windowSeats = allSeats.filter((seat) => seat.window);
+      const shuffledWindows = shuffleWithSeed(windowSeats, seedState);
+      const guaranteedAvailableWindows = new Set(
+        shuffledWindows
+          .slice(0, Math.min(minimumAvailableWindows, shuffledWindows.length))
+          .map((seat) => seat.id)
+      );
+
+      const shuffledSeats = shuffleWithSeed(allSeats, seedState);
+      const takenTarget = Math.floor(allSeats.length * (0.34 + seededRandom(seedState) * 0.28));
+
+      let takenCount = 0;
+
+      shuffledSeats.forEach((seat) => {
+        if (takenCount >= takenTarget) return;
+        if (guaranteedAvailableWindows.has(seat.id)) return;
+
+        seat.taken = true;
+        takenCount += 1;
+      });
+
+      return {
+        aircraftType: type,
+        rows,
+        letters,
+        seats: allSeats,
+        generatedAtMs: Date.now()
+      };
+    }
+
+    function showPage(page) {
+      setupPage.classList.remove("active");
+      seatPage.classList.remove("active");
+
+      page.classList.add("active");
+    }
+
+    function showLockedScreen() {
+      appShell.style.display = "none";
+      lockedScreen.classList.add("active");
+    }
+
+    function showProcessingPopup(title, subtitle) {
+      statusTitle.textContent = title;
+      statusSubtitle.textContent = subtitle;
+      overlay.classList.add("active");
+      statusPopup.classList.add("active");
+    }
+
+    function updateFlightCard() {
+      const airline = sessionData.airline || "AA";
+      const flightNumber = sessionData.flightNumber || "0000";
+
+      flightNumberDisplay.textContent = `${airline} ${flightNumber}`;
+      departureDisplay.textContent = sessionData.departureAirport || "DEP";
+      arrivalDisplay.textContent = sessionData.arrivalAirport || "ARR";
+
+      airlineLogo.innerHTML = `
+        <img src="${getAirlineLogoPath(airline)}" alt="${escapeHTML(airline)} logo" onerror="this.style.display='none';" />
+      `;
+    }
+
+    function chooseAircraft(type) {
+      selectedAircraftType = type;
+
+      widebodyOption.classList.toggle("selected", type === "widebody");
+      narrowbodyOption.classList.toggle("selected", type === "narrowbody");
+
+      continueButton.disabled = false;
+    }
+
+    async function continueToSeatSelection() {
+      if (!selectedAircraftType || !sessionRef || !sessionData) return;
+
+      const lockedLayouts = sessionData.lockedLayouts || {};
+      let layout = lockedLayouts[selectedAircraftType];
+
+      if (!layout) {
+        layout = generateSeatLayout(selectedAircraftType);
+
+        await updateDoc(sessionRef, {
+          [`lockedLayouts.${selectedAircraftType}`]: layout,
+          aircraftType: selectedAircraftType,
+          updatedAt: serverTimestamp()
+        });
+
+        sessionData.lockedLayouts = {
+          ...lockedLayouts,
+          [selectedAircraftType]: layout
+        };
+      } else {
+        await updateDoc(sessionRef, {
+          aircraftType: selectedAircraftType,
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      activeLayout = layout;
+      selectedSeat = null;
+      openedSeatPopover = "";
+
+      renderSeatMap();
+      showPage(seatPage);
+    }
+
+    function createAisle() {
+      const aisle = document.createElement("div");
+      aisle.className = "aisle";
+      return aisle;
+    }
+
+    function renderSeatMap() {
+      if (!activeLayout) return;
+
+      const type = activeLayout.aircraftType;
+      const letters = activeLayout.letters || getLettersForAircraft(type);
+      const rows = Number(activeLayout.rows || 1);
+      const seats = activeLayout.seats || [];
+
+      aircraftBody.className = `aircraft-body ${type}`;
+      seatMapTitle.textContent = type === "widebody" ? "Widebody First/Business" : "Narrowbody First/Business";
+      seatMap.innerHTML = "";
+
+      const lettersRow = document.createElement("div");
+      lettersRow.className = "letters-row";
+
+      if (type === "widebody") {
+        ["A", "D", "", "G", "J"].forEach((letter, index) => {
+          if (index === 2) {
+            lettersRow.appendChild(createAisle());
+            return;
+          }
+
+          const letterEl = document.createElement("div");
+          letterEl.className = "letter";
+          letterEl.textContent = letter;
+          lettersRow.appendChild(letterEl);
+        });
+      } else {
+        ["A", "C", "", "D", "F"].forEach((letter, index) => {
+          if (index === 2) {
+            lettersRow.appendChild(createAisle());
+            return;
+          }
+
+          const letterEl = document.createElement("div");
+          letterEl.className = "letter";
+          letterEl.textContent = letter;
+          lettersRow.appendChild(letterEl);
+        });
+      }
+
+      seatMap.appendChild(lettersRow);
+
+      for (let row = 1; row <= rows; row += 1) {
+        const rowEl = document.createElement("div");
+        rowEl.className = "seat-row";
+
+        const rowLetters = type === "widebody"
+          ? ["A", "D", "AISLE", "G", "J"]
+          : ["A", "C", "AISLE", "D", "F"];
+
+        rowLetters.forEach((letter) => {
+          if (letter === "AISLE") {
+            rowEl.appendChild(createAisle());
+            return;
+          }
+
+          const seatData = seats.find((seat) => seat.row === row && seat.letter === letter);
+
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `seat ${seatData?.taken ? "taken" : "available"} ${selectedSeat?.id === seatData?.id ? "selected" : ""}`;
+          button.textContent = seatData?.id || `${row}${letter}`;
+          button.disabled = seatData?.taken === true;
+
+          if (seatData && !seatData.taken) {
+            button.addEventListener("click", () => {
+              toggleSeatPopover(seatData);
+            });
+          }
+
+          if (openedSeatPopover === seatData?.id) {
+            button.appendChild(createSeatPopover(seatData));
+          }
+
+          rowEl.appendChild(button);
+        });
+
+        seatMap.appendChild(rowEl);
+      }
+
+      updateSelectionPanel();
+    }
+
+    function createSeatPopover(seatData) {
+      const popover = document.createElement("div");
+      popover.className = "seat-popover";
+
+      popover.innerHTML = `
+        <div class="popover-seat">${escapeHTML(seatData.id)}</div>
+        <div class="popover-price">${Number(seatData.price).toLocaleString("en-US")} mi</div>
+        <button class="popover-button" type="button">Select seat</button>
+      `;
+
+      popover.querySelector(".popover-button").addEventListener("click", (event) => {
+        event.stopPropagation();
+        selectedSeat = seatData;
+        openedSeatPopover = "";
+        renderSeatMap();
+      });
+
+      return popover;
+    }
+
+    function toggleSeatPopover(seatData) {
+      if (openedSeatPopover === seatData.id) {
+        openedSeatPopover = "";
+      } else {
+        openedSeatPopover = seatData.id;
+      }
+
+      renderSeatMap();
+    }
+
+    function updateSelectionPanel() {
+      selectedSeatDisplay.textContent = selectedSeat?.id || "--";
+      selectedPriceDisplay.textContent = selectedSeat
+        ? `${Number(selectedSeat.price).toLocaleString("en-US")} mi`
+        : "--";
+
+      payButton.disabled = !selectedSeat;
+    }
+
+    async function payNow() {
+      if (!selectedSeat || !sessionRef || !sessionData) return;
+
+      payButton.disabled = true;
+
+      showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
+
+      try {
+        await updateDoc(sessionRef, {
+          status: "processing",
+          selectedSeat: selectedSeat.id,
+          selectedCabin: "First/Business",
+          paidMiles: Number(selectedSeat.price || 0),
+          aircraftType: selectedAircraftType,
+          updatedAt: serverTimestamp()
+        });
+
+        setTimeout(async () => {
+          statusTitle.textContent = "Redirecting...";
+          statusSubtitle.textContent = "Return to the original flight tracker to confirm.";
+
+          await updateDoc(sessionRef, {
+            status: "redirecting",
+            updatedAt: serverTimestamp()
+          });
+
+          const returnUrl = sessionData.returnUrl || "/";
+          window.location.href = `${returnUrl}?seatSessionId=${encodeURIComponent(sessionId)}`;
+        }, 5000);
+      } catch (error) {
+        console.error("Error processing seat selection:", error);
+        alert("Seat selection could not be processed.");
+        overlay.classList.remove("active");
+        statusPopup.classList.remove("active");
+        payButton.disabled = false;
+      }
+    }
+
+    async function init() {
+      if (!sessionId) {
+        showLockedScreen();
+        return;
+      }
+
+      sessionRef = doc(db, "seatSelectionSessions", sessionId);
+
+      const snapshot = await getDoc(sessionRef);
+
+      if (!snapshot.exists()) {
+        showLockedScreen();
+        return;
+      }
+
+      sessionData = snapshot.data();
+
+      if (
+        sessionData.status === "completed" ||
+        sessionData.status === "canceled"
+      ) {
+        showLockedScreen();
+        return;
+      }
+
+      if (sessionData.status === "redirecting" || sessionData.status === "processing") {
+        updateFlightCard();
+        showProcessingPopup("Redirecting...", "Return to the original flight tracker to confirm your seat.");
+      } else {
+        updateFlightCard();
+      }
+
+      if (sessionData.aircraftType) {
+        chooseAircraft(sessionData.aircraftType);
+      }
+
+      onSnapshot(sessionRef, (liveSnapshot) => {
+        if (!liveSnapshot.exists()) {
+          showLockedScreen();
+          return;
+        }
+
+        sessionData = liveSnapshot.data();
+
+        if (
+          sessionData.status === "completed" ||
+          sessionData.status === "canceled"
+        ) {
+          showLockedScreen();
+        }
+
+        if (sessionData.status === "redirecting" || sessionData.status === "processing") {
+          showProcessingPopup("Redirecting...", "Return to the original flight tracker to confirm your seat.");
+        }
+      });
+    }
+
+    widebodyOption.addEventListener("click", () => chooseAircraft("widebody"));
+    narrowbodyOption.addEventListener("click", () => chooseAircraft("narrowbody"));
+    continueButton.addEventListener("click", continueToSeatSelection);
+
+    seatBackButton.addEventListener("click", () => {
+      activeLayout = null;
+      openedSeatPopover = "";
+      selectedSeat = null;
+      showPage(setupPage);
+    });
+
+    payButton.addEventListener("click", payNow);
+
+    init();
+  </script>
+</body>
+</html>
