@@ -336,7 +336,7 @@
     .seat-row {
       display: grid;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 12px;
     }
 
@@ -344,9 +344,10 @@
       margin-bottom: 0;
     }
 
+    /* Widebody now correctly has TWO aisles: A | aisle | D G | aisle | J */
     .widebody .letters-row,
     .widebody .seat-row {
-      grid-template-columns: 1fr 1fr 20px 1fr 1fr 20px 1fr 1fr;
+      grid-template-columns: 1fr 28px 1fr 1fr 28px 1fr;
     }
 
     .narrowbody .letters-row,
@@ -359,8 +360,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: rgba(0, 0, 0, 0.30);
-      font-size: 11px;
+      color: rgba(0, 0, 0, 0.25);
+      font-size: 10px;
       font-weight: 850;
     }
 
@@ -378,35 +379,27 @@
 
     .seat {
       position: relative;
-      min-height: 48px;
       border: none;
-      border-radius: 14px 14px 11px 11px;
-      background:
-        linear-gradient(180deg, #7d838b, #555b65);
       color: white;
       font-size: 12px;
       font-weight: 900;
       cursor: pointer;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.26),
-        0 5px 0 rgba(55, 60, 68, 0.94),
-        0 12px 20px rgba(0, 0, 0, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
       transition:
         transform 0.22s ease,
         filter 0.22s ease,
         opacity 0.22s ease,
-        background 0.22s ease;
+        background 0.22s ease,
+        box-shadow 0.22s ease;
     }
 
-    .seat::after {
-      content: "";
-      position: absolute;
-      left: 7px;
-      right: 7px;
-      bottom: 6px;
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.18);
+    .seat-label {
+      position: relative;
+      z-index: 2;
+      pointer-events: none;
     }
 
     .seat.available:active {
@@ -419,14 +412,76 @@
       filter: grayscale(0.75);
     }
 
-    .seat.selected {
-      background:
-        linear-gradient(180deg, #16e18a, #0fbf75);
+    /* Narrowbody seat style */
+    .seat.standard-seat {
+      min-height: 48px;
+      border-radius: 14px 14px 11px 11px;
+      background: linear-gradient(180deg, #7d838b, #555b65);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.26),
+        0 5px 0 rgba(55, 60, 68, 0.94),
+        0 12px 20px rgba(0, 0, 0, 0.18);
+    }
+
+    .seat.standard-seat::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      bottom: 6px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    /* Widebody premium pod-style seat */
+    .seat.pod-seat {
+      min-height: 68px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #7e8590, #5a616c);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.20),
+        0 6px 0 rgba(70, 76, 85, 0.95),
+        0 14px 24px rgba(0, 0, 0, 0.16);
+    }
+
+    .seat.pod-seat::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      right: 8px;
+      height: 22px;
+      border-radius: 12px 12px 10px 10px;
+      background: linear-gradient(180deg, rgba(149, 157, 168, 0.95), rgba(105, 114, 126, 0.92));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      z-index: 0;
+    }
+
+    .seat.pod-seat::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 8px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.24);
+      z-index: 0;
+    }
+
+    .seat.standard-seat.selected,
+    .seat.pod-seat.selected {
+      background: linear-gradient(180deg, #16e18a, #0fbf75);
+      color: #03120b;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.36),
         0 5px 0 rgba(3, 117, 69, 0.95),
         0 18px 30px rgba(12, 190, 113, 0.24);
-      color: #03120b;
+    }
+
+    .seat.pod-seat.selected::before {
+      background: linear-gradient(180deg, rgba(131, 255, 196, 0.95), rgba(36, 194, 121, 0.92));
     }
 
     .seat-popover {
@@ -587,21 +642,73 @@
       line-height: 1.28;
     }
 
+    .status-visual {
+      min-height: 52px;
+      margin: 20px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .loader {
       width: 44px;
       height: 44px;
-      margin: 20px auto 0;
       border-radius: 50%;
       border: 4px solid rgba(255, 255, 255, 0.14);
       border-top-color: #16e18a;
       animation: seatRedirectSpin 0.9s linear infinite;
     }
 
+    .loader.hidden {
+      display: none;
+    }
+
     @keyframes seatRedirectSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .success-check {
+      display: none;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #16e18a, #0fbf75);
+      box-shadow:
+        0 14px 30px rgba(12, 190, 113, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.32);
+      align-items: center;
+      justify-content: center;
+      color: white;
+      animation: checkPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .success-check.active {
+      display: flex;
+    }
+
+    .success-check svg {
+      width: 28px;
+      height: 28px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    @keyframes checkPop {
+      from {
+        transform: scale(0.75);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
 
     .locked-screen {
       display: none;
@@ -771,7 +878,16 @@
   <section class="status-popup" id="statusPopup">
     <div class="status-title" id="statusTitle">Transaction processing...</div>
     <div class="status-subtitle" id="statusSubtitle">Do not close this page.</div>
-    <div class="loader"></div>
+
+    <div class="status-visual">
+      <div class="loader" id="statusLoader"></div>
+
+      <div class="success-check" id="successCheck" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5"></path>
+        </svg>
+      </div>
+    </div>
   </section>
 
   <script type="module">
@@ -824,6 +940,8 @@
     const statusPopup = document.getElementById("statusPopup");
     const statusTitle = document.getElementById("statusTitle");
     const statusSubtitle = document.getElementById("statusSubtitle");
+    const statusLoader = document.getElementById("statusLoader");
+    const successCheck = document.getElementById("successCheck");
 
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("sessionId");
@@ -848,12 +966,6 @@
       const safeCode = String(code || "").trim().toLowerCase();
       if (!safeCode) return "";
       return `./${safeCode}.png`;
-    }
-
-    function getRandomInteger(min, max) {
-      const low = Math.ceil(min);
-      const high = Math.floor(max);
-      return Math.floor(Math.random() * (high - low + 1)) + low;
     }
 
     function hashString(value) {
@@ -986,7 +1098,6 @@
     function showPage(page) {
       setupPage.classList.remove("active");
       seatPage.classList.remove("active");
-
       page.classList.add("active");
     }
 
@@ -995,9 +1106,17 @@
       lockedScreen.classList.add("active");
     }
 
-    function showProcessingPopup(title, subtitle) {
+    function setStatusVisual(mode) {
+      const readyMode = mode === "ready";
+
+      statusLoader.classList.toggle("hidden", readyMode);
+      successCheck.classList.toggle("active", readyMode);
+    }
+
+    function showProcessingPopup(title, subtitle, mode = "processing") {
       statusTitle.textContent = title;
       statusSubtitle.textContent = subtitle;
+      setStatusVisual(mode);
       overlay.classList.add("active");
       statusPopup.classList.add("active");
     }
@@ -1068,7 +1187,6 @@
       if (!activeLayout) return;
 
       const type = activeLayout.aircraftType;
-      const letters = activeLayout.letters || getLettersForAircraft(type);
       const rows = Number(activeLayout.rows || 1);
       const seats = activeLayout.seats || [];
 
@@ -1079,31 +1197,21 @@
       const lettersRow = document.createElement("div");
       lettersRow.className = "letters-row";
 
-      if (type === "widebody") {
-        ["A", "D", "", "G", "J"].forEach((letter, index) => {
-          if (index === 2) {
-            lettersRow.appendChild(createAisle());
-            return;
-          }
+      const letterPattern = type === "widebody"
+        ? ["A", "AISLE", "D", "G", "AISLE", "J"]
+        : ["A", "C", "AISLE", "D", "F"];
 
-          const letterEl = document.createElement("div");
-          letterEl.className = "letter";
-          letterEl.textContent = letter;
-          lettersRow.appendChild(letterEl);
-        });
-      } else {
-        ["A", "C", "", "D", "F"].forEach((letter, index) => {
-          if (index === 2) {
-            lettersRow.appendChild(createAisle());
-            return;
-          }
+      letterPattern.forEach((item) => {
+        if (item === "AISLE") {
+          lettersRow.appendChild(createAisle());
+          return;
+        }
 
-          const letterEl = document.createElement("div");
-          letterEl.className = "letter";
-          letterEl.textContent = letter;
-          lettersRow.appendChild(letterEl);
-        });
-      }
+        const letterEl = document.createElement("div");
+        letterEl.className = "letter";
+        letterEl.textContent = item;
+        lettersRow.appendChild(letterEl);
+      });
 
       seatMap.appendChild(lettersRow);
 
@@ -1111,11 +1219,11 @@
         const rowEl = document.createElement("div");
         rowEl.className = "seat-row";
 
-        const rowLetters = type === "widebody"
-          ? ["A", "D", "AISLE", "G", "J"]
+        const rowPattern = type === "widebody"
+          ? ["A", "AISLE", "D", "G", "AISLE", "J"]
           : ["A", "C", "AISLE", "D", "F"];
 
-        rowLetters.forEach((letter) => {
+        rowPattern.forEach((letter) => {
           if (letter === "AISLE") {
             rowEl.appendChild(createAisle());
             return;
@@ -1125,9 +1233,9 @@
 
           const button = document.createElement("button");
           button.type = "button";
-          button.className = `seat ${seatData?.taken ? "taken" : "available"} ${selectedSeat?.id === seatData?.id ? "selected" : ""}`;
-          button.textContent = seatData?.id || `${row}${letter}`;
+          button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} ${seatData?.taken ? "taken" : "available"} ${selectedSeat?.id === seatData?.id ? "selected" : ""}`;
           button.disabled = seatData?.taken === true;
+          button.innerHTML = `<span class="seat-label">${escapeHTML(seatData?.id || `${row}${letter}`)}</span>`;
 
           if (seatData && !seatData.taken) {
             button.addEventListener("click", () => {
@@ -1188,39 +1296,46 @@
     }
 
     async function payNow() {
-  if (!selectedSeat || !sessionRef || !sessionData) return;
+      if (!selectedSeat || !sessionRef || !sessionData) return;
 
-  payButton.disabled = true;
+      payButton.disabled = true;
 
-  showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
+      showProcessingPopup(
+        "Transaction processing...",
+        "Your seat and mileage cost are being locked.",
+        "processing"
+      );
 
-  try {
-    await updateDoc(sessionRef, {
-      status: "processing",
-      selectedSeat: selectedSeat.id,
-      selectedCabin: "First/Business",
-      paidMiles: Number(selectedSeat.price || 0),
-      aircraftType: selectedAircraftType,
-      updatedAt: serverTimestamp()
-    });
+      try {
+        await updateDoc(sessionRef, {
+          status: "processing",
+          selectedSeat: selectedSeat.id,
+          selectedCabin: "First/Business",
+          paidMiles: Number(selectedSeat.price || 0),
+          aircraftType: selectedAircraftType,
+          updatedAt: serverTimestamp()
+        });
 
-    setTimeout(async () => {
-      statusTitle.textContent = "Please return to the original flight tracker";
-      statusSubtitle.textContent = "Your selected seat is ready to confirm.";
+        setTimeout(async () => {
+          showProcessingPopup(
+            "Please return to the original flight tracker",
+            "Your selected seat is ready to confirm.",
+            "ready"
+          );
 
-      await updateDoc(sessionRef, {
-        status: "redirecting",
-        updatedAt: serverTimestamp()
-      });
-    }, 5000);
-  } catch (error) {
-    console.error("Error processing seat selection:", error);
-    alert("Seat selection could not be processed.");
-    overlay.classList.remove("active");
-    statusPopup.classList.remove("active");
-    payButton.disabled = false;
-  }
-}
+          await updateDoc(sessionRef, {
+            status: "redirecting",
+            updatedAt: serverTimestamp()
+          });
+        }, 5000);
+      } catch (error) {
+        console.error("Error processing seat selection:", error);
+        alert("Seat selection could not be processed.");
+        overlay.classList.remove("active");
+        statusPopup.classList.remove("active");
+        payButton.disabled = false;
+      }
+    }
 
     async function init() {
       if (!sessionId) {
@@ -1249,13 +1364,21 @@
 
       updateFlightCard();
 
-if (sessionData.status === "processing") {
-  showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
-}
+      if (sessionData.status === "processing") {
+        showProcessingPopup(
+          "Transaction processing...",
+          "Your seat and mileage cost are being locked.",
+          "processing"
+        );
+      }
 
-if (sessionData.status === "redirecting") {
-  showProcessingPopup("Please return to the original flight tracker", "Your selected seat is ready to confirm.");
-}
+      if (sessionData.status === "redirecting") {
+        showProcessingPopup(
+          "Please return to the original flight tracker",
+          "Your selected seat is ready to confirm.",
+          "ready"
+        );
+      }
 
       if (sessionData.aircraftType) {
         chooseAircraft(sessionData.aircraftType);
@@ -1274,15 +1397,26 @@ if (sessionData.status === "redirecting") {
           sessionData.status === "canceled"
         ) {
           showLockedScreen();
+          return;
         }
 
-        if (sessionData.status === "processing") {
-  showProcessingPopup("Transaction processing...", "Your seat and mileage cost are being locked.");
-}
+        updateFlightCard();
 
-if (sessionData.status === "redirecting") {
-  showProcessingPopup("Please return to the original flight tracker", "Your selected seat is ready to confirm.");
-}
+        if (sessionData.status === "processing") {
+          showProcessingPopup(
+            "Transaction processing...",
+            "Your seat and mileage cost are being locked.",
+            "processing"
+          );
+        }
+
+        if (sessionData.status === "redirecting") {
+          showProcessingPopup(
+            "Please return to the original flight tracker",
+            "Your selected seat is ready to confirm.",
+            "ready"
+          );
+        }
       });
     }
 
