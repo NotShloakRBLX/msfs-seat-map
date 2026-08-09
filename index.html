@@ -1506,7 +1506,7 @@ function requireOwnerAuth(startApp) {
 
     payButton.addEventListener("click", payNow);
 
-    init();
+    requireOwnerAuth(init);
   </script>
 </body>
 </html>
