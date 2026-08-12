@@ -434,6 +434,42 @@
       background: rgba(0, 0, 0, 0.18);
     }
 
+    .seat.main-extra-seat {
+  background: linear-gradient(180deg, #ffb13b, #de7c12);
+  color: #1a0d00;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    0 5px 0 rgba(134, 70, 6, 0.94),
+    0 12px 20px rgba(0, 0, 0, 0.18);
+}
+
+.seat.preferred-seat {
+  background: linear-gradient(180deg, #26d983, #15985d);
+  color: #03120b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    0 5px 0 rgba(6, 102, 60, 0.94),
+    0 12px 20px rgba(0, 0, 0, 0.18);
+}
+
+.seat.paid-zone::before {
+  content: "$";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 4;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 8, 18, 0.94);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 950;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+}
+
     /* Widebody premium pod-style seat */
     .seat.pod-seat {
       min-height: 68px;
@@ -1064,17 +1100,132 @@ function requireOwnerAuth(startApp) {
       return Math.floor(seededRandom(seedState) * (max - min + 1)) + min;
     }
 
-    function getPremiumSeatCostRange(distance) {
-      const safeDistance = Number(distance || 0);
+    function getFirstBusinessDollarRange(distance) {
+  const safeDistance = Number(distance || 0);
 
-      if (safeDistance <= 500) return { min: 750, max: 1500 };
-      if (safeDistance <= 1500) return { min: 2000, max: 3500 };
-      if (safeDistance <= 3000) return { min: 4000, max: 6500 };
-      if (safeDistance <= 5500) return { min: 6500, max: 9500 };
-      if (safeDistance <= 8000) return { min: 11000, max: 17000 };
+  if (safeDistance <= 500) return { min: 8, max: 15 };
+  if (safeDistance <= 1500) return { min: 20, max: 35 };
+  if (safeDistance <= 3000) return { min: 40, max: 65 };
+  if (safeDistance <= 5500) return { min: 65, max: 95 };
+  if (safeDistance <= 8000) return { min: 110, max: 170 };
 
-      return { min: 18000, max: 26000 };
-    }
+  return { min: 180, max: 260 };
+}
+
+function getPremiumEconomyDollarRange(distance) {
+  const premium = getFirstBusinessDollarRange(distance);
+  return {
+    min: Math.max(5, Math.round(premium.min * 0.45)),
+    max: Math.max(8, Math.round(premium.max * 0.45))
+  };
+}
+
+function getEconomyZoneDollarRange(zone, distance) {
+  const safeDistance = Number(distance || 0);
+
+  if (zone === "main-extra") {
+    if (safeDistance <= 1500) return { min: 25, max: 35 };
+    if (safeDistance <= 3500) return { min: 35, max: 50 };
+    return { min: 50, max: 65 };
+  }
+
+  if (zone === "preferred") {
+    if (safeDistance <= 1500) return { min: 10, max: 16 };
+    if (safeDistance <= 3500) return { min: 16, max: 25 };
+    return { min: 25, max: 35 };
+  }
+
+  if (safeDistance <= 1500) return { min: 8, max: 12 };
+  if (safeDistance <= 3500) return { min: 12, max: 16 };
+  return { min: 16, max: 22 };
+}
+
+function getCabinMode() {
+  return sessionData.cabinMode || "firstBusiness";
+}
+
+function getCabinLabel() {
+  const mode = getCabinMode();
+
+  if (mode === "premiumEconomy") return "Premium Economy";
+  if (mode === "economy") return "Economy";
+
+  return "First/Business";
+}
+
+function getRowsForCabin() {
+  const mode = getCabinMode();
+
+  if (mode === "premiumEconomy") {
+    const startRow = Number(sessionData.premiumEconomyStartRow || 1);
+    const lastRow = Number(sessionData.premiumEconomyLastRow || startRow);
+    return { startRow, lastRow, totalRows: Math.max(1, lastRow - startRow + 1) };
+  }
+
+  if (mode === "economy") {
+    const startRow = Number(sessionData.economyStartRow || 1);
+    const lastRow = Number(sessionData.economyLastRow || startRow);
+    return { startRow, lastRow, totalRows: Math.max(1, lastRow - startRow + 1) };
+  }
+
+  return {
+    startRow: 1,
+    lastRow: Math.max(1, Number(sessionData.firstBusinessLastRow || 1)),
+    totalRows: Math.max(1, Number(sessionData.firstBusinessLastRow || 1))
+  };
+}
+
+function getEconomySeatZone(row) {
+  const startRow = Number(sessionData.economyStartRow || 1);
+  const offset = row - startRow + 1;
+
+  if (offset >= 1 && offset <= 7) return "main-extra";
+  if (offset >= 8 && offset <= 15) return "preferred";
+
+  return "standard";
+}
+
+function getSeatTypeForRow(row) {
+  const mode = getCabinMode();
+
+  if (mode === "firstBusiness") return "First/Business";
+  if (mode === "premiumEconomy") return "Premium Economy";
+
+  const zone = getEconomySeatZone(row);
+
+  if (zone === "main-extra") return "Main Cabin Extra";
+  if (zone === "preferred") return "Preferred Seating";
+
+  return "Standard Economy";
+}
+
+function getSeatPrice(row, startRow, totalRows, distance) {
+  const mode = getCabinMode();
+  const zone = mode === "economy" ? getEconomySeatZone(row) : "";
+  const range = mode === "firstBusiness"
+    ? getFirstBusinessDollarRange(distance)
+    : mode === "premiumEconomy"
+      ? getPremiumEconomyDollarRange(distance)
+      : getEconomyZoneDollarRange(zone, distance);
+
+  const rowIndex = Math.max(0, row - startRow);
+  const frontFactor = totalRows <= 1 ? 1 : 1 - (rowIndex / (totalRows - 1));
+  const base = range.min + ((range.max - range.min) * frontFactor);
+
+  return Math.max(range.min, Math.min(range.max, Math.round(base)));
+}
+
+function getBoardingGroupForSelectedSeat(seat) {
+  const mode = getCabinMode();
+
+  if (mode === "firstBusiness") return 1;
+  if (mode === "premiumEconomy") return 4;
+
+  if (seat?.seatType === "Main Cabin Extra") return 5;
+  if (seat?.seatType === "Preferred Seating") return 6;
+
+  return Number(sessionData.hasMilesStatus === true ? 7 : seededInteger({ value: hashString(`${sessionId}-${seat?.id || ""}-group`) }, 8, 9));
+}
 
     function getSeatPrice(row, totalRows, distance, seedState) {
       const range = getPremiumSeatCostRange(distance);
@@ -1114,59 +1265,67 @@ function requireOwnerAuth(startApp) {
     }
 
     function generateSeatLayout(type) {
-      const rows = Math.max(1, Number(sessionData.firstBusinessLastRow || 1));
-      const distance = Number(sessionData.routeDistanceMiles || 0);
-      const letters = getLettersForAircraft(type);
-      const windowLetters = getWindowLettersForAircraft(type);
-      const minimumAvailableWindows = type === "widebody" ? 4 : 2;
-      const seedState = { value: hashString(`${sessionId}-${type}`) };
+  const cabinRows = getRowsForCabin();
+  const rows = cabinRows.totalRows;
+  const startRow = cabinRows.startRow;
+  const lastRow = cabinRows.lastRow;
+  const distance = Number(sessionData.routeDistanceMiles || 0);
+  const letters = getLettersForAircraft(type);
+  const windowLetters = getWindowLettersForAircraft(type);
+  const minimumAvailableWindows = type === "widebody" ? 4 : 2;
+  const seedState = { value: hashString(`${sessionId}-${type}-${getCabinMode()}`) };
 
-      const allSeats = [];
+  const allSeats = [];
 
-      for (let row = 1; row <= rows; row += 1) {
-        letters.forEach((letter) => {
-          const seatNumber = `${row}${letter}`;
+  for (let row = startRow; row <= lastRow; row += 1) {
+    letters.forEach((letter) => {
+      const seatNumber = `${row}${letter}`;
+      const seatType = getSeatTypeForRow(row);
 
-          allSeats.push({
-            id: seatNumber,
-            row,
-            letter,
-            price: getSeatPrice(row, rows, distance, seedState),
-            window: windowLetters.includes(letter),
-            taken: false
-          });
-        });
-      }
-
-      const windowSeats = allSeats.filter((seat) => seat.window);
-      const shuffledWindows = shuffleWithSeed(windowSeats, seedState);
-      const guaranteedAvailableWindows = new Set(
-        shuffledWindows
-          .slice(0, Math.min(minimumAvailableWindows, shuffledWindows.length))
-          .map((seat) => seat.id)
-      );
-
-      const shuffledSeats = shuffleWithSeed(allSeats, seedState);
-      const takenTarget = Math.floor(allSeats.length * (0.34 + seededRandom(seedState) * 0.28));
-
-      let takenCount = 0;
-
-      shuffledSeats.forEach((seat) => {
-        if (takenCount >= takenTarget) return;
-        if (guaranteedAvailableWindows.has(seat.id)) return;
-
-        seat.taken = true;
-        takenCount += 1;
+      allSeats.push({
+        id: seatNumber,
+        row,
+        letter,
+        price: getSeatPrice(row, startRow, rows, distance),
+        seatType,
+        zone: getCabinMode() === "economy" ? getEconomySeatZone(row) : "",
+        window: windowLetters.includes(letter),
+        taken: false
       });
+    });
+  }
 
-      return {
-        aircraftType: type,
-        rows,
-        letters,
-        seats: allSeats,
-        generatedAtMs: Date.now()
-      };
-    }
+  const windowSeats = allSeats.filter((seat) => seat.window);
+  const shuffledWindows = shuffleWithSeed(windowSeats, seedState);
+  const guaranteedAvailableWindows = new Set(
+    shuffledWindows
+      .slice(0, Math.min(minimumAvailableWindows, shuffledWindows.length))
+      .map((seat) => seat.id)
+  );
+
+  const shuffledSeats = shuffleWithSeed(allSeats, seedState);
+  const takenTarget = Math.floor(allSeats.length * (0.34 + seededRandom(seedState) * 0.28));
+
+  let takenCount = 0;
+
+  shuffledSeats.forEach((seat) => {
+    if (takenCount >= takenTarget) return;
+    if (guaranteedAvailableWindows.has(seat.id)) return;
+
+    seat.taken = true;
+    takenCount += 1;
+  });
+
+  return {
+    aircraftType: type,
+    rows,
+    startRow,
+    lastRow,
+    letters,
+    seats: allSeats,
+    generatedAtMs: Date.now()
+  };
+}
 
     function showPage(page) {
       setupPage.classList.remove("active");
@@ -1264,7 +1423,7 @@ function requireOwnerAuth(startApp) {
       const seats = activeLayout.seats || [];
 
       aircraftBody.className = `aircraft-body ${type}`;
-      seatMapTitle.textContent = type === "widebody" ? "Widebody First/Business" : "Narrowbody First/Business";
+      seatMapTitle.textContent = `${type === "widebody" ? "Widebody" : "Narrowbody"} ${getCabinLabel()}`;
       seatMap.innerHTML = "";
 
       const lettersRow = document.createElement("div");
@@ -1288,7 +1447,10 @@ function requireOwnerAuth(startApp) {
 
       seatMap.appendChild(lettersRow);
 
-      for (let row = 1; row <= rows; row += 1) {
+      const startRow = Number(activeLayout.startRow || 1);
+const lastRow = Number(activeLayout.lastRow || rows);
+
+for (let row = startRow; row <= lastRow; row += 1) {
         const rowEl = document.createElement("div");
         rowEl.className = "seat-row";
 
@@ -1306,7 +1468,13 @@ function requireOwnerAuth(startApp) {
 
           const button = document.createElement("button");
           button.type = "button";
-          button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} ${seatData?.taken ? "taken" : "available"} ${selectedSeat?.id === seatData?.id ? "selected" : ""}`;
+          const zoneClass = seatData?.zone === "main-extra"
+  ? "main-extra-seat paid-zone"
+  : seatData?.zone === "preferred"
+    ? "preferred-seat paid-zone"
+    : "";
+
+button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} ${zoneClass} ${seatData?.taken ? "taken" : "available"} ${selectedSeat?.id === seatData?.id ? "selected" : ""}`;
           button.disabled = seatData?.taken === true;
           button.innerHTML = `<span class="seat-label">${escapeHTML(seatData?.id || `${row}${letter}`)}</span>`;
 
@@ -1335,7 +1503,7 @@ function requireOwnerAuth(startApp) {
 
       popover.innerHTML = `
         <div class="popover-seat">${escapeHTML(seatData.id)}</div>
-        <div class="popover-price">${Number(seatData.price).toLocaleString("en-US")} mi</div>
+        <div class="popover-price">$${Number(seatData.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         <button class="popover-button" type="button">Select seat</button>
       `;
 
@@ -1362,7 +1530,7 @@ function requireOwnerAuth(startApp) {
     function updateSelectionPanel() {
       selectedSeatDisplay.textContent = selectedSeat?.id || "--";
       selectedPriceDisplay.textContent = selectedSeat
-        ? `${Number(selectedSeat.price).toLocaleString("en-US")} mi`
+        ? `$${Number(selectedSeat.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : "--";
 
       payButton.disabled = !selectedSeat;
@@ -1383,9 +1551,12 @@ function requireOwnerAuth(startApp) {
         await updateDoc(sessionRef, {
           status: "processing",
           selectedSeat: selectedSeat.id,
-          selectedCabin: "First/Business",
-          paidMiles: Number(selectedSeat.price || 0),
-          aircraftType: selectedAircraftType,
+          selectedCabin: getCabinLabel(),
+selectedSeatType: selectedSeat.seatType || getCabinLabel(),
+selectedBoardingGroup: getBoardingGroupForSelectedSeat(selectedSeat),
+paidDollars: Number(selectedSeat.price || 0),
+paidMiles: Math.round(Number(selectedSeat.price || 0) * 100),
+aircraftType: selectedAircraftType,
           updatedAt: serverTimestamp()
         });
 
