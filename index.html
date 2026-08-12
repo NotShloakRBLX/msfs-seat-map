@@ -1141,7 +1141,13 @@ function getEconomyZoneDollarRange(zone, distance) {
 }
 
 function getCabinMode() {
-  return sessionData.cabinMode || "firstBusiness";
+  const mode = String(sessionData?.cabinMode || "").trim();
+
+  if (mode === "premiumEconomy" || mode === "economy" || mode === "firstBusiness") {
+    return mode;
+  }
+
+  return "firstBusiness";
 }
 
 function getCabinLabel() {
