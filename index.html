@@ -1227,16 +1227,6 @@ function getBoardingGroupForSelectedSeat(seat) {
   return Number(sessionData.hasMilesStatus === true ? 7 : seededInteger({ value: hashString(`${sessionId}-${seat?.id || ""}-group`) }, 8, 9));
 }
 
-    function getSeatPrice(row, totalRows, distance, seedState) {
-      const range = getPremiumSeatCostRange(distance);
-      const frontFactor = totalRows <= 1 ? 1 : 1 - ((row - 1) / (totalRows - 1));
-      const base = range.min + ((range.max - range.min) * frontFactor);
-      const randomShift = seededInteger(seedState, -650, 650);
-      const price = Math.round(base + randomShift);
-
-      return Math.max(range.min, Math.min(range.max, price));
-    }
-
     function shuffleWithSeed(items, seedState) {
       const array = [...items];
 
