@@ -1054,6 +1054,7 @@ function requireOwnerAuth(startApp) {
 
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("sessionId");
+    const MILES_PER_DOLLAR = 25;
 
     let sessionRef = null;
     let sessionData = null;
@@ -1061,6 +1062,20 @@ function requireOwnerAuth(startApp) {
     let activeLayout = null;
     let openedSeatPopover = "";
     let selectedSeat = null;
+
+    function isPayingWithMiles() {
+      return sessionData?.paymentMethod === "miles" || sessionData?.payWithMiles === true;
+    }
+
+    function dollarsToMiles(amount) {
+      return Math.ceil(Number(amount || 0) * MILES_PER_DOLLAR);
+    }
+
+    function formatSeatPrice(amount) {
+      return isPayingWithMiles()
+        ? `${dollarsToMiles(amount).toLocaleString("en-US")} mi`
+        : `$${Number(amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
 
     function escapeHTML(value) {
       return String(value || "")
@@ -1499,7 +1514,7 @@ button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} $
 
       popover.innerHTML = `
         <div class="popover-seat">${escapeHTML(seatData.id)}</div>
-        <div class="popover-price">$${Number(seatData.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+        <div class="popover-price">${formatSeatPrice(seatData.price)}</div>
         <button class="popover-button" type="button">Select seat</button>
       `;
 
@@ -1526,7 +1541,7 @@ button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} $
     function updateSelectionPanel() {
       selectedSeatDisplay.textContent = selectedSeat?.id || "--";
       selectedPriceDisplay.textContent = selectedSeat
-        ? `$${Number(selectedSeat.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        ? formatSeatPrice(selectedSeat.price)
         : "--";
 
       payButton.disabled = !selectedSeat;
@@ -1551,7 +1566,7 @@ button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} $
 selectedSeatType: selectedSeat.seatType || getCabinLabel(),
 selectedBoardingGroup: getBoardingGroupForSelectedSeat(selectedSeat),
 paidDollars: Number(selectedSeat.price || 0),
-paidMiles: Math.round(Number(selectedSeat.price || 0) * 100),
+paidMiles: dollarsToMiles(selectedSeat.price),
 aircraftType: selectedAircraftType,
           updatedAt: serverTimestamp()
         });
