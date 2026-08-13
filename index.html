@@ -1115,16 +1115,16 @@ function requireOwnerAuth(startApp) {
       return Math.floor(seededRandom(seedState) * (max - min + 1)) + min;
     }
 
-    function getFirstBusinessDollarRange(distance) {
+function getFirstBusinessDollarRange(distance) {
   const safeDistance = Number(distance || 0);
 
-  if (safeDistance <= 500) return { min: 8, max: 15 };
-  if (safeDistance <= 1500) return { min: 20, max: 35 };
-  if (safeDistance <= 3000) return { min: 40, max: 65 };
-  if (safeDistance <= 5500) return { min: 65, max: 95 };
-  if (safeDistance <= 8000) return { min: 110, max: 170 };
+  if (safeDistance <= 500) return { min: 120, max: 190 };
+  if (safeDistance <= 1500) return { min: 210, max: 360 };
+  if (safeDistance <= 3000) return { min: 380, max: 650 };
+  if (safeDistance <= 5500) return { min: 720, max: 1250 };
+  if (safeDistance <= 8000) return { min: 1200, max: 1900 };
 
-  return { min: 180, max: 260 };
+  return { min: 1800, max: 2800 };
 }
 
 function getPremiumEconomyDollarRange(distance) {
