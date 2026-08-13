@@ -452,7 +452,7 @@
     0 12px 20px rgba(0, 0, 0, 0.18);
 }
 
-.seat.paid-zone::before {
+.seat .paid-badge {
   content: "$";
   position: absolute;
   top: -8px;
@@ -468,6 +468,7 @@
   font-size: 11px;
   font-weight: 950;
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
 }
 
     /* Widebody premium pod-style seat */
@@ -506,6 +507,32 @@
       z-index: 0;
     }
 
+    .seat.pod-seat.main-extra-seat {
+      background: linear-gradient(180deg, #ffb13b, #de7c12);
+      color: #1a0d00;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.30),
+        0 6px 0 rgba(134, 70, 6, 0.94),
+        0 14px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .seat.pod-seat.main-extra-seat::before {
+      background: linear-gradient(180deg, rgba(255, 196, 94, 0.95), rgba(199, 108, 10, 0.92));
+    }
+
+    .seat.pod-seat.preferred-seat {
+      background: linear-gradient(180deg, #26d983, #15985d);
+      color: #03120b;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.30),
+        0 6px 0 rgba(6, 102, 60, 0.94),
+        0 14px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .seat.pod-seat.preferred-seat::before {
+      background: linear-gradient(180deg, rgba(89, 235, 158, 0.95), rgba(18, 129, 78, 0.92));
+    }
+
     .seat.standard-seat.selected,
     .seat.pod-seat.selected {
       background: linear-gradient(180deg, #d5d9e1, #8f96a3);
@@ -525,14 +552,14 @@
       left: 50%;
       bottom: calc(100% + 10px);
       z-index: 30;
-      width: 142px;
-      padding: 10px;
-      border-radius: 15px;
+      width: 218px;
+      padding: 12px;
+      border-radius: 17px;
       background: rgba(7, 11, 24, 0.96);
       border: 1px solid rgba(255, 255, 255, 0.13);
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
       transform: translateX(-50%);
-      text-align: center;
+      text-align: left;
       pointer-events: auto;
       animation: popoverIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -550,17 +577,41 @@
     }
 
     .popover-seat {
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 950;
       letter-spacing: -0.4px;
       color: white;
+      text-align: center;
+    }
+
+    .popover-type {
+      margin-top: 2px;
+      color: rgba(255, 255, 255, 0.74);
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.15;
+      text-align: center;
+    }
+
+    .popover-benefits {
+      margin: 9px 0 0;
+      padding-left: 16px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 11px;
+      line-height: 1.28;
+      font-weight: 760;
+    }
+
+    .popover-benefits li + li {
+      margin-top: 4px;
     }
 
     .popover-price {
-      margin-top: 3px;
+      margin-top: 10px;
       color: #16e18a;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 850;
+      text-align: center;
     }
 
     .popover-button {
@@ -1248,6 +1299,37 @@ function getBoardingGroupForSelectedSeat(seat) {
   return Number(sessionData.hasMilesStatus === true ? 7 : seededInteger({ value: hashString(`${sessionId}-${seat?.id || ""}-group`) }, 8, 9));
 }
 
+function getPopoverSeatType(seat) {
+  const type = seat?.seatType || getCabinLabel();
+
+  if (type === "Preferred Seating") return "Preferred";
+  if (type === "Standard Economy") return "Standard";
+
+  return type;
+}
+
+function getSeatBenefits(seat) {
+  const type = seat?.seatType || getCabinLabel();
+
+  if (type === "First/Business") {
+    return ["Priority boarding (Group 1)", "Premium cabin"];
+  }
+
+  if (type === "Premium Economy") {
+    return ["Priority boarding (Group 4)", "Premium cabin"];
+  }
+
+  if (type === "Main Cabin Extra") {
+    return ["Priority boarding (Group 5)", "Convenient location"];
+  }
+
+  if (type === "Preferred Seating") {
+    return ["Priority boarding (Group 6)", "Convenient location"];
+  }
+
+  return [];
+}
+
     function shuffleWithSeed(items, seedState) {
       const array = [...items];
 
@@ -1487,7 +1569,10 @@ for (let row = startRow; row <= lastRow; row += 1) {
 
 button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} ${zoneClass} ${seatData?.taken ? "taken" : "available"} ${selectedSeat?.id === seatData?.id ? "selected" : ""}`;
           button.disabled = seatData?.taken === true;
-          button.innerHTML = `<span class="seat-label">${escapeHTML(seatData?.id || `${row}${letter}`)}</span>`;
+          button.innerHTML = `
+            <span class="seat-label">${escapeHTML(seatData?.id || `${row}${letter}`)}</span>
+            ${zoneClass ? `<span class="paid-badge">$</span>` : ""}
+          `;
 
           if (seatData && !seatData.taken) {
             button.addEventListener("click", () => {
@@ -1511,12 +1596,22 @@ button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} $
     function createSeatPopover(seatData) {
       const popover = document.createElement("div");
       popover.className = "seat-popover";
+      const benefits = getSeatBenefits(seatData);
+      const benefitsMarkup = benefits.length
+        ? `<ul class="popover-benefits">${benefits.map(benefit => `<li>${escapeHTML(benefit)}</li>`).join("")}</ul>`
+        : "";
 
       popover.innerHTML = `
         <div class="popover-seat">${escapeHTML(seatData.id)}</div>
+        <div class="popover-type">${escapeHTML(getPopoverSeatType(seatData))}</div>
+        ${benefitsMarkup}
         <div class="popover-price">${formatSeatPrice(seatData.price)}</div>
         <button class="popover-button" type="button">Select seat</button>
       `;
+
+      popover.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
 
       popover.querySelector(".popover-button").addEventListener("click", (event) => {
         event.stopPropagation();
