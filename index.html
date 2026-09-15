@@ -668,6 +668,128 @@
       color: #16e18a;
     }
 
+    .group-upgrade-card {
+      display: none;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background:
+        radial-gradient(circle at top left, rgba(255, 83, 83, 0.13), transparent 42%),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.028)),
+        rgba(12, 18, 31, 0.92);
+      box-shadow:
+        0 22px 65px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+      grid-template-columns: 58px 1fr;
+      gap: 14px;
+      align-items: stretch;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+
+    .group-upgrade-card.active {
+      display: grid;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .group-upgrade-icon {
+      min-height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(145deg, rgba(255, 79, 79, 0.24), rgba(255, 79, 79, 0.09)),
+        rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 100, 100, 0.28);
+      color: #ff6b6b;
+    }
+
+    .group-upgrade-icon svg {
+      width: 30px;
+      height: 30px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .group-upgrade-title {
+      color: #fff;
+      font-size: 17px;
+      line-height: 1.15;
+      font-weight: 940;
+      letter-spacing: -0.25px;
+    }
+
+    .group-upgrade-subtitle {
+      margin-top: 5px;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 720;
+    }
+
+    .group-upgrade-price {
+      margin-top: 9px;
+      color: #16e18a;
+      font-size: 15px;
+      font-weight: 920;
+    }
+
+    .group-upgrade-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .group-upgrade-button,
+    .group-upgrade-cancel {
+      height: 42px;
+      border: none;
+      border-radius: 999px;
+      color: #03120a;
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+      transition: opacity 0.24s ease, transform 0.24s ease, background 0.24s ease, max-width 0.28s ease, padding 0.28s ease;
+    }
+
+    .group-upgrade-button {
+      flex: 1 1 auto;
+      background: linear-gradient(135deg, #23ef92, #13c879);
+      box-shadow: 0 14px 34px rgba(19, 200, 121, 0.22);
+    }
+
+    .group-upgrade-button.upgraded {
+      background: linear-gradient(135deg, #14945c, #0c6c45);
+      color: rgba(255, 255, 255, 0.84);
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .group-upgrade-cancel {
+      flex: 0 0 auto;
+      max-width: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+      color: #fff;
+      background: linear-gradient(135deg, #ff5050, #b91c1c);
+    }
+
+    .group-upgrade-cancel.active {
+      max-width: 96px;
+      padding: 0 18px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .overlay {
       position: fixed;
       inset: 0;
@@ -938,11 +1060,28 @@
         </div>
       </section>
 
+      <section class="group-upgrade-card" id="groupUpgradeCard">
+        <div class="group-upgrade-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 8v5" />
+            <path d="M12 17h.01" />
+            <path d="M10.3 3.9 2.7 17.1A2 2 0 0 0 4.43 20h15.14a2 2 0 0 0 1.73-2.9L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+          </svg>
+        </div>
+
+        <div class="group-upgrade-content">
+          <div class="group-upgrade-title" id="groupUpgradeTitle">You are boarding in Group 8</div>
+          <div class="group-upgrade-subtitle">You can upgrade to board earlier in Group 7</div>
+          <div class="group-upgrade-price" id="groupUpgradePrice">--</div>
+          <div class="group-upgrade-actions">
+            <button class="group-upgrade-button" id="groupUpgradeButton" type="button">Upgrade to Group 7</button>
+            <button class="group-upgrade-cancel" id="groupUpgradeCancelButton" type="button">Cancel</button>
+          </div>
+        </div>
+      </section>
+
       <button class="pay-button" id="payButton" type="button" disabled>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M7 10V8a5 5 0 0 1 10 0v2h.5A2.5 2.5 0 0 1 20 12.5v6A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-6A2.5 2.5 0 0 1 6.5 10H7Zm2 0h6V8a3 3 0 0 0-6 0v2Z" />
-        </svg>
-        Pay now
+        Continue
       </button>
     </section>
   </main>
@@ -963,7 +1102,7 @@
   <div class="overlay" id="overlay"></div>
 
   <section class="status-popup" id="statusPopup">
-    <div class="status-title" id="statusTitle">Transaction processing...</div>
+    <div class="status-title" id="statusTitle">Processing seat...</div>
     <div class="status-subtitle" id="statusSubtitle">Do not close this page.</div>
 
     <div class="status-visual">
@@ -1095,6 +1234,11 @@ function requireOwnerAuth(startApp) {
     const selectedSeatDisplay = document.getElementById("selectedSeatDisplay");
     const selectedPriceDisplay = document.getElementById("selectedPriceDisplay");
     const payButton = document.getElementById("payButton");
+    const groupUpgradeCard = document.getElementById("groupUpgradeCard");
+    const groupUpgradeTitle = document.getElementById("groupUpgradeTitle");
+    const groupUpgradePrice = document.getElementById("groupUpgradePrice");
+    const groupUpgradeButton = document.getElementById("groupUpgradeButton");
+    const groupUpgradeCancelButton = document.getElementById("groupUpgradeCancelButton");
 
     const overlay = document.getElementById("overlay");
     const statusPopup = document.getElementById("statusPopup");
@@ -1113,6 +1257,7 @@ function requireOwnerAuth(startApp) {
     let activeLayout = null;
     let openedSeatPopover = "";
     let selectedSeat = null;
+    let groupUpgradeSelected = false;
 
     function isPayingWithMiles() {
       return sessionData?.paymentMethod === "miles" || sessionData?.payWithMiles === true;
@@ -1297,6 +1442,35 @@ function getBoardingGroupForSelectedSeat(seat) {
   if (seat?.seatType === "Preferred Seating") return 6;
 
   return Number(sessionData.hasMilesStatus === true ? 7 : 8);
+}
+
+function canOfferGroupUpgrade(seat) {
+  return (
+    getCabinMode() === "economy" &&
+    seat?.seatType === "Standard Economy" &&
+    sessionData?.hasMilesStatus !== true &&
+    getBoardingGroupForSelectedSeat(seat) === 8
+  );
+}
+
+function getGroupUpgradeDollarCost() {
+  const distance = Number(sessionData?.routeDistanceMiles || 0);
+
+  if (distance <= 1500) return 9;
+  if (distance <= 3500) return 14;
+  return 22;
+}
+
+function getSelectedSeatTotalPrice() {
+  if (!selectedSeat) return 0;
+  return Number(selectedSeat.price || 0) + (groupUpgradeSelected ? getGroupUpgradeDollarCost() : 0);
+}
+
+function getFinalBoardingGroupForSelectedSeat() {
+  if (!selectedSeat) return 0;
+  return groupUpgradeSelected && canOfferGroupUpgrade(selectedSeat)
+    ? 7
+    : getBoardingGroupForSelectedSeat(selectedSeat);
 }
 
 function getPopoverSeatType(seat) {
@@ -1616,6 +1790,7 @@ button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} $
       popover.querySelector(".popover-button").addEventListener("click", (event) => {
         event.stopPropagation();
         selectedSeat = seatData;
+        groupUpgradeSelected = false;
         openedSeatPopover = "";
         renderSeatMap();
       });
@@ -1636,32 +1811,60 @@ button.className = `seat ${type === "widebody" ? "pod-seat" : "standard-seat"} $
     function updateSelectionPanel() {
       selectedSeatDisplay.textContent = selectedSeat?.id || "--";
       selectedPriceDisplay.textContent = selectedSeat
-        ? formatSeatPrice(selectedSeat.price)
+        ? formatSeatPrice(getSelectedSeatTotalPrice())
         : "--";
 
+      renderGroupUpgradeCard();
       payButton.disabled = !selectedSeat;
     }
 
-    async function payNow() {
+    function renderGroupUpgradeCard() {
+      const showUpgrade = selectedSeat && canOfferGroupUpgrade(selectedSeat);
+
+      groupUpgradeCard.classList.toggle("active", Boolean(showUpgrade));
+
+      if (!showUpgrade) {
+        groupUpgradeSelected = false;
+        groupUpgradeButton.classList.remove("upgraded");
+        groupUpgradeButton.disabled = false;
+        groupUpgradeButton.textContent = "Upgrade to Group 7";
+        groupUpgradeCancelButton.classList.remove("active");
+        return;
+      }
+
+      groupUpgradeTitle.textContent = "You are boarding in Group 8";
+      groupUpgradePrice.textContent = formatSeatPrice(getGroupUpgradeDollarCost());
+      groupUpgradeButton.textContent = groupUpgradeSelected ? "Upgraded" : "Upgrade to Group 7";
+      groupUpgradeButton.classList.toggle("upgraded", groupUpgradeSelected);
+      groupUpgradeButton.disabled = groupUpgradeSelected;
+      groupUpgradeCancelButton.classList.toggle("active", groupUpgradeSelected);
+    }
+
+    async function continueSeatSelection() {
       if (!selectedSeat || !sessionRef || !sessionData) return;
 
       payButton.disabled = true;
 
       showProcessingPopup(
-        "Transaction processing...",
-        "Your seat and mileage cost are being locked.",
+        "Processing seat...",
+        "Your seat selection is being locked.",
         "processing"
       );
 
       try {
+        const totalSeatPrice = getSelectedSeatTotalPrice();
+
         await updateDoc(sessionRef, {
           status: "processing",
           selectedSeat: selectedSeat.id,
           selectedCabin: getCabinLabel(),
 selectedSeatType: selectedSeat.seatType || getCabinLabel(),
-selectedBoardingGroup: getBoardingGroupForSelectedSeat(selectedSeat),
-paidDollars: Number(selectedSeat.price || 0),
-paidMiles: dollarsToMiles(selectedSeat.price),
+selectedBoardingGroup: getFinalBoardingGroupForSelectedSeat(),
+group7UpgradeSelected: groupUpgradeSelected === true,
+group7UpgradeDollars: groupUpgradeSelected === true ? getGroupUpgradeDollarCost() : 0,
+group7UpgradeMiles: groupUpgradeSelected === true ? dollarsToMiles(getGroupUpgradeDollarCost()) : 0,
+paidDollars: totalSeatPrice,
+paidMiles: dollarsToMiles(totalSeatPrice),
 aircraftType: selectedAircraftType,
           updatedAt: serverTimestamp()
         });
@@ -1716,8 +1919,8 @@ aircraftType: selectedAircraftType,
 
       if (sessionData.status === "processing") {
         showProcessingPopup(
-          "Transaction processing...",
-          "Your seat and mileage cost are being locked.",
+          "Processing seat...",
+          "Your seat selection is being locked.",
           "processing"
         );
       }
@@ -1754,8 +1957,8 @@ aircraftType: selectedAircraftType,
 
         if (sessionData.status === "processing") {
           showProcessingPopup(
-            "Transaction processing...",
-            "Your seat and mileage cost are being locked.",
+            "Processing seat...",
+            "Your seat selection is being locked.",
             "processing"
           );
         }
@@ -1778,10 +1981,22 @@ aircraftType: selectedAircraftType,
       activeLayout = null;
       openedSeatPopover = "";
       selectedSeat = null;
+      groupUpgradeSelected = false;
       showPage(setupPage);
     });
 
-    payButton.addEventListener("click", payNow);
+    groupUpgradeButton.addEventListener("click", () => {
+      if (!selectedSeat || !canOfferGroupUpgrade(selectedSeat) || groupUpgradeSelected) return;
+      groupUpgradeSelected = true;
+      updateSelectionPanel();
+    });
+
+    groupUpgradeCancelButton.addEventListener("click", () => {
+      groupUpgradeSelected = false;
+      updateSelectionPanel();
+    });
+
+    payButton.addEventListener("click", continueSeatSelection);
 
     requireOwnerAuth(init);
   </script>
